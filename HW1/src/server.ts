@@ -4,6 +4,10 @@ import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
 
+
+const BOOKS:string = "books";
+const AUTHORS:string = "authors";
+
 let app = express();
 app.use(express.json());
 
@@ -17,40 +21,6 @@ let db = await open({
     driver: sqlite3.Database,
 });
 await db.get("PRAGMA foreign_keys = ON");
-
-//
-// TODO SQLITE EXAMPLES
-// comment these out or they'll keep inserting every time you run your server
-// if you get 'UNIQUE constraint failed' errors it's because
-// this will keep inserting a row with the same primary key
-// but the primary key should be unique
-//
-
-// TODO insert example
-// await db.run(
-//     "INSERT INTO authors(id, name, bio) VALUES('1', 'Figginsworth III', 'A traveling gentleman.')"
-// );
-// await db.run(
-//     "INSERT INTO books(id, author_id, title, pub_year, genre) VALUES ('1', '1', 'My Fairest Lady', '1866', 'romance')"
-// );
-
-// TODO insert example with parameterized queries
-// important to use parameterized queries to prevent SQL injection
-// when inserting untrusted data
-// let statement = await db.prepare(
-//     "INSERT INTO books(id, author_id, title, pub_year, genre) VALUES (?, ?, ?, ?, ?)"
-// );
-// await statement.bind(["2", "1", "A Travelogue of Tales", "1867", "adventure"]);
-// await statement.run();
-
-// TODO select examples
-// let authors = await db.all("SELECT * FROM authors");
-// console.log("Authors", authors);
-// let books = await db.all("SELECT * FROM books WHERE author_id = '1'");
-// console.log("Books", books);
-// let filteredBooks = await db.all("SELECT * FROM books WHERE pub_year = '1867'");
-
-// console.log("Some books", filteredBooks);
 
 async function generateUniqueID(table:string):Promise<number>{
     let IDs = await db.all(`SELECT id FROM ${table}`);
@@ -87,18 +57,13 @@ async function addBook(id:number, author_id:number, title:string, pub_year:numbe
     );
 }
 
-async function validAuthorID(author_id:number):Promise<boolean>{
-    let out = await db.all(`SELECT id FROM authors WHERE id=${author_id}`);
-    return out.length>0;
-}
-
-async function validBookID(id:number):Promise<boolean>{
-    let out = await db.all(`SELECT id FROM books WHERE id=${id}`);
-    return out.length>0;
-}
-
 async function validGenre(genre:string):Promise<boolean>{
     let out = await db.all(`SELECT genre FROM books WHERE genre='${genre}'`);
+    return out.length>0;
+}
+
+async function validID(type:string, id:number){
+    let out = await db.all(`SELECT ${id} from ${type} WHERE id=${id}`);
     return out.length>0;
 }
 
@@ -107,15 +72,9 @@ async function authorHasBooks(id:number){
     return out.length>0;
 }
 
-async function deleteBook(id:number){
+async function deleteResource(id:number, type:string){
     return await db.run(
-        `DELETE FROM books WHERE id=${id}`
-    );
-}
-
-async function deleteAuthor(id:number){
-    return await db.run(
-        `DELETE FROM authors WHERE id=${id}`
+        `DELETE FROM ${type}s WHERE id=${id}`
     );
 }
 
@@ -125,46 +84,29 @@ async function deleteAuthorBooks(id:number){
     );
 }
 
-async function getBookByID(id:number){
-    return await db.get(
-        `SELECT * FROM books WHERE id=${id}`
-    );
-}
-
 async function getBookByGenre(genre:string){
     return await db.get(
         `SELECT * FROM books WHERE genre='${genre}'`
     );
 }
 
-async function getAllBooks(){
-    return await db.all(
-        `SELECT * FROM books`
-    );
-}
-
-async function getAuthorByID(id:number){
+async function getResourceByID(type:string, id:number){
     return await db.get(
-        `SELECT * FROM authors WHERE id=${id}`
+        `SELECT * FROM ${type} WHERE id=${id}`
     );
 }
 
-async function getAllAuthors(){
+async function getAllOfType(type:string){
     return await db.all(
-        `SELECT * FROM authors`
-    );
+        `SELECT * FROM ${type}`
+    )
 }
-//
-// TODO EXPRESS EXAMPLES
-//
 
-// TODO GET/POST/DELETE example
-// interface Foo {
-//     message: string;
-// }
-// interface Ye {
-//     result: string;
-// }
+enum RequestType {
+    Author = "author",
+    Book = "book"
+}
+
 interface Error {
     error: string;
 }
@@ -183,18 +125,13 @@ interface Author {
     name: string,
     bio: string
 }
-// type YeResponse = Response<Ye | Error>;
-// type FooResponse = Response<Foo | Error>;
+
 type createResourceResponse = Response <Resource | Error>;
-type getBookResponse = Response <Book | Error>;
 type getBooksResponse = Response <Array<Book> | Error>;
-type getAuthorResponse = Response <Author | Error>;
 type getAuthorsResponse = Response <Array<Author> | Error>;
-// res's type limits what responses this request handler can send
-// it must send either an object with a message or an error
-// app.get()
+
 app.post("/addAuthor", async (req, res: createResourceResponse) => {
-    let id:number = await generateUniqueID("authors");
+    let id:number = await generateUniqueID(AUTHORS);
     let name:string = req.body.name;
     let bio:string = req.body.bio;
     try{
@@ -210,10 +147,10 @@ app.post("/addAuthor", async (req, res: createResourceResponse) => {
 })
 
 app.post("/addBook", async (req, res: createResourceResponse) => {
-    let id:number = await generateUniqueID("books");
+    let id:number = await generateUniqueID(BOOKS);
 
     let author_id:number = req.body.author_id;
-    if(!(await validAuthorID(author_id))){
+    if(!(await validID(AUTHORS, author_id))){
         return res.status(400).json({ error : "author id doesn't exist in database"});
     }
 
@@ -238,147 +175,69 @@ app.post("/addBook", async (req, res: createResourceResponse) => {
     });
 });
 
-app.delete("/deleteBook", async (req, res) => {
+app.delete("/deleteResource", async (req, res) => {
     let id:number = Number(req.query.id);
-    if(!(await validBookID(id))){
-        return res.status(400).json({ error : "book id doesn't exist in database"});
+    let type:RequestType = <RequestType> req.query.type;
+
+    if(type==RequestType.Author){
+        if(!(await validID(AUTHORS, id))){
+            return res.status(400).json({ error : "author id doesn't exist in database"});
+        }
+        if(await authorHasBooks(id)){
+            deleteAuthorBooks(id);
+        }
+    } else if (type==RequestType.Book){
+        if(!(await validID(BOOKS, id))){
+            return res.status(400).json({ error : "book id doesn't exist in database"});
+        }
+    } else {
+        return res.status(400).json({error : "invalid request type (author, book)"})
     }
-    deleteBook(id).then(() => {
+
+    deleteResource(id, type).then(() => {
         res.sendStatus(200);
-    });
-})
-
-app.delete("/deleteAuthor", async (req, res) => {
-    let author_id:number = Number(req.query.id);
-    if(!(await validAuthorID(author_id))){
-        return res.status(400).json({ error : "author id doesn't exist in database"});
-    }
-    if(await authorHasBooks(author_id)){
-        deleteAuthorBooks(author_id);
-    }
-    deleteAuthor(author_id).then(() => {
-        res.sendStatus(200);
-    });
-})
-
-app.get("/getBook", async (req, res: getBookResponse) => {
-    let id:number = Number(req.query.id);
-    let book = await getBookByID(id);
-    if(!await validBookID(id)){
-        return res.status(400).json({ error : "book id doesn't exist in database"})
-    }
-
-    return res.json({
-        id: book.id,
-        author_id: book.author_id,
-        title: book.title,
-        pub_year: book.pub_year,
-        genre: book.genre
-    });
-})
-
-app.get("/getBookByGenre", async (req, res: getBookResponse) => {
-    let genre:string = String(req.query.genre);
-    let book = await getBookByGenre(genre);
-    if(!await validGenre(genre)){
-        return res.status(400).json({ error : "genre doesn't exist in database"})
-    }
-    return res.json({
-        id: book.id,
-        author_id: book.author_id,
-        title: book.title,
-        pub_year: book.pub_year,
-        genre: book.genre
     })
 })
 
-app.get("/getAllBooks", async (req, res: getBooksResponse) => {
-    let books:Array<Book> = await getAllBooks();
-    let out:Array<Book> = [];
-    books.forEach(book => {
-        out.push({
-            id: book.id,
-            author_id: book.author_id,
-            title: book.title,
-            pub_year: book.pub_year,
-            genre: book.genre
-        })
-    });
-    return res.json(out);
-})
+app.get("/getBooks", async (req, res: getBooksResponse) => {
+    if(req.query.id){
+        let id:number = Number(req.query.id);
+        let book = await getResourceByID(BOOKS, id);
+        if(!await validID(BOOKS, id)){
+            return res.status(400).json({ error : "book id doesn't exist in database"})
+        }
+        return res.json(book);
 
-app.get("/getAuthor", async (req, res: getAuthorResponse) => {
-    let author_id:number = Number(req.query.id);
-    let author = await getAuthorByID(author_id);
-    if(!await validAuthorID(author_id)){
-        return res.status(400).json({ error : "author id doesn't exist in database"})
+    } else if (req.query.genre){
+        let genre:string = String(req.query.genre);
+        let book = await getBookByGenre(genre);
+        if(!await validGenre(genre)){
+            return res.status(400).json({ error : "genre doesn't exist in database"})
+        }
+        return res.json(book);
+
+    } else {
+        let books:Array<Book> = await getAllOfType(BOOKS);
+        return res.json(books);
     }
-    return res.json({
-        id: author.id,
-        name: author.name,
-        bio: author.bio
-    });
+});
+
+app.get("/getAuthors", async (req, res: getAuthorsResponse) => {
+    if(req.query.id){
+        let author_id:number = Number(req.query.id);
+        let author = await getResourceByID(AUTHORS, author_id);
+        if(!await validID(AUTHORS, author_id)){
+            return res.status(400).json({ error : "author id doesn't exist in database"})
+        }
+        return res.json([author]);
+        
+    } else {
+        let authors:Array<Author> = await getAllOfType(AUTHORS);
+        return res.json(authors);
+    }
 })
 
-app.get("/getAllAuthors", async (req, res: getAuthorsResponse) => {
-    let authors:Array<Author> = await getAllAuthors();
-    let out:Array<Author> = [];
-    authors.forEach(author => {
-        out.push({
-            id: author.id,
-            name: author.name,
-            bio: author.bio
-        });
-    });
-    return res.json(out);
-})
-// app.get("/ye", (req, res: FooResponse) => {
-//     return res.json({message: 'yee'});
-// });
-// app.get("/foo", (req, res: FooResponse) => {
-//     if (!req.query.bar) {
-//         return res.status(400).json({ error: "bar is required" });
-//     }
-//     return res.json({ message: `You sent: ${req.query.bar} in the query` });
-// });
-// app.post("/ye", (req, res: YeResponse) => {
-//     let query = req.query.query;
-//     let body = req.body.body;
-//     return res.json({ result: `query is ${query} and body is ${body}` });
-// });
-// app.post("/foo", (req, res: FooResponse) => {
-//     if (!req.body.bar) {
-//         return res.status(400).json({ error: "bar is required" });
-//     }
-//     return res.json({ message: `You sent: ${req.body.bar} in the body` });
-// });
-// app.delete("/foo", (req, res) => {
-//     // etc.
-//     res.sendStatus(200);
-// });
 
-//
-// TODO ASYNC/AWAIT EXAMPLE
-//
-
-// function sleep(ms: number) {
-//     return new Promise((resolve) => setTimeout(resolve, ms));
-// }
-// // need async keyword on request handler to use await inside it
-// app.get("/bar", async (req, res: FooResponse) => {
-//     console.log("Waiting...");
-//     // await is equivalent to calling sleep.then(() => { ... })
-//     // and putting all the code after this in that func body ^
-//     await sleep(3000);
-//     // if we omitted the await, all of this code would execute
-//     // immediately without waiting for the sleep to finish
-//     console.log("Done!");
-//     return res.sendStatus(200);
-// });
-// test it out! while server is running:
-// curl http://localhost:3000/bar
-
-// run server
 let port = 3000;
 let host = "localhost";
 let protocol = "http";

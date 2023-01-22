@@ -28,47 +28,6 @@ afterAll(() => {
     db.run("DELETE FROM books WHERE 1=1");
     db.run("DELETE FROM authors WHERE 1=1");
 });
-// test("GET /foo?bar returns message", async () => {
-//     let bar = "xyzzy";
-//     let { data } = await axios.get(`${baseUrl}/foo?bar=${bar}`);
-//     expect(data).toEqual({ message: `You sent: ${bar} in the query` });
-// });
-// test("GET /foo returns error", async () => {
-//     try {
-//         await axios.get(`${baseUrl}/foo`);
-//     } catch (error) {
-//         // casting needed b/c typescript gives errors "unknown" type
-//         let errorObj = error as AxiosError;
-//         // if server never responds, error.response will be undefined
-//         // throw the error so typescript can perform type narrowing
-//         if (errorObj.response === undefined) {
-//             throw errorObj;
-//         }
-//         // now, after the if-statement, typescript knows
-//         // that errorObj can't be undefined
-//         let { response } = errorObj;
-//         // TODO this test will fail, replace 300 with 400
-//         expect(response.status).toEqual(300);
-//         expect(response.data).toEqual({ error: "bar is required" });
-//     }
-// });
-// test("POST /bar works good", async () => {
-//     let bar = "xyzzy";
-//     let result = await axios.post(`${baseUrl}/foo`, { bar });
-//     expect(result.data).toEqual({ message: `You sent: ${bar} in the body` });
-// });
-//TODO new tests
-// test("Test GET ye", async () => {
-//     let result = await axios.get(`${baseUrl}/ye`);
-//     console.log(result);
-//     expect(result.data).toEqual({ message: 'yee'});
-// });
-// test("test POST body vs query string", async () => {
-//     let query = "query";
-//     let body = "body";
-//     let result = await axios.post(`${baseUrl}/ye?query=${query}`, { body });
-//     expect(result.data).toEqual({ result: `query is ${query} and body is ${body}`});
-// });
 //CREATE AUTHOR TESTS
 describe("Create Author Tests", () => {
     test("create author happy path", async () => {
@@ -106,7 +65,7 @@ describe("Create Author Tests", () => {
 //CREATE BOOK TESTS
 describe("Create book tests", () => {
     test("create book happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         let title = BOOK_TITLE;
         let pub_year = PUB_YEAR;
         let genre = GENRE;
@@ -114,7 +73,7 @@ describe("Create book tests", () => {
         expect(await isBookInTable(result.data.id, author_id, title, pub_year, genre)).toBeTruthy();
     });
     test("create two books with same data", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         let title = BOOK_TITLE;
         let pub_year = PUB_YEAR;
         let genre = GENRE;
@@ -144,7 +103,7 @@ describe("Create book tests", () => {
         }
     });
     test("invalid title", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         let title = "title is way too long and def over 20 characters";
         let pub_year = PUB_YEAR;
         let genre = GENRE;
@@ -163,7 +122,7 @@ describe("Create book tests", () => {
         }
     });
     test("invalid pub_year (string)", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         let title = BOOK_TITLE;
         let pub_year = "nineteen forty-three";
         let genre = GENRE;
@@ -182,7 +141,7 @@ describe("Create book tests", () => {
         }
     });
     test("invalid pub_year (not 4 digits)", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         let title = BOOK_TITLE;
         let pub_year = 20450;
         let genre = GENRE;
@@ -204,19 +163,19 @@ describe("Create book tests", () => {
 //DELETE BOOKS
 describe("Delete book tests", () => {
     test("delete book happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
-        let id = await (await initializeBook(author_id)).data.id;
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
         expect(await isBookInTable(id, author_id, BOOK_TITLE, PUB_YEAR, GENRE)).toBeTruthy();
-        await axios.delete(`${baseUrl}/deleteBook?id=${id}`);
+        await axios.delete(`${baseUrl}/deleteResource?id=${id}&type=book`);
         expect(await isBookInTable(id, author_id, BOOK_TITLE, PUB_YEAR, GENRE)).toBeFalsy();
     });
     test("delete book invalid id", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
-        let actual_id = await (await initializeBook(author_id)).data.id;
+        let author_id = (await initializeAuthor()).data.id;
+        let actual_id = (await initializeBook(author_id)).data.id;
         let id = 100;
         expect(await isBookInTable(actual_id, author_id, BOOK_TITLE, PUB_YEAR, GENRE)).toBeTruthy();
         try {
-            await axios.delete(`${baseUrl}/deleteBook?id=${id}`);
+            await axios.delete(`${baseUrl}/deleteResource?id=${id}&type=book`);
             fail('this call should return a 400');
         }
         catch (error) {
@@ -234,26 +193,26 @@ describe("Delete book tests", () => {
 //DELETE AUTHORS
 describe("Delete author tests", () => {
     test("delete author happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeTruthy();
-        await axios.delete(`${baseUrl}/deleteAuthor?id=${author_id}`);
+        await axios.delete(`${baseUrl}/deleteResource?id=${author_id}&type=author`);
         expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeFalsy();
     });
     test("delete author with books associated", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
-        let id = await (await initializeBook(author_id)).data.id;
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
         expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeTruthy();
         expect(await isBookInTable(id, author_id, BOOK_TITLE, PUB_YEAR, GENRE)).toBeTruthy();
-        await axios.delete(`${baseUrl}/deleteAuthor?id=${author_id}`);
+        await axios.delete(`${baseUrl}/deleteResource?id=${author_id}&type=author`);
         expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeFalsy();
         expect(await isBookInTable(id, author_id, BOOK_TITLE, PUB_YEAR, GENRE)).toBeFalsy();
     });
     test("delete author invalid author_id", async () => {
-        let actual_id = await (await initializeAuthor()).data.id;
+        let actual_id = (await initializeAuthor()).data.id;
         let author_id = 100;
         expect(await isAuthorInTable(actual_id, AUTHOR_NAME, AUTHOR_BIO)).toBeTruthy();
         try {
-            await axios.delete(`${baseUrl}/deleteAuthor?id=${author_id}`);
+            await axios.delete(`${baseUrl}/deleteResource?id=${author_id}&type=author`);
             fail('this call should return a 400');
         }
         catch (error) {
@@ -268,19 +227,40 @@ describe("Delete author tests", () => {
         }
     });
 });
+//DELETE
+describe("Delete tests", () => {
+    test("Delete test with bad type in query string", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeTruthy();
+        try {
+            await axios.delete(`${baseUrl}/deleteResource?id=${author_id}&type=bad`);
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "invalid request type (author, book)" });
+            expect(await isAuthorInTable(author_id, AUTHOR_NAME, AUTHOR_BIO)).toBeTruthy();
+        }
+    });
+});
 //GET BOOKS
 describe("Get books tests", () => {
     test("get book by id happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
-        let id = await (await initializeBook(author_id)).data.id;
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
         let expectedBook = {
             id: 1,
             author_id: String(author_id),
-            title: 'Harry Potter',
-            pub_year: '2001',
-            genre: 'Fiction'
+            title: BOOK_TITLE,
+            pub_year: String(PUB_YEAR),
+            genre: GENRE
         };
-        let result = await axios.get(`${baseUrl}/getBook?id=${id}`);
+        let result = await axios.get(`${baseUrl}/getBooks?id=${id}`);
         expect(result.data).toEqual(expectedBook);
     });
     test("get book invalid id", async () => {
@@ -288,7 +268,7 @@ describe("Get books tests", () => {
         await initializeBook(author_id);
         let id = 100;
         try {
-            await axios.get(`${baseUrl}/getBook?id=${id}`);
+            await axios.get(`${baseUrl}/getBooks?id=${id}`);
             fail('this call should return a 400');
         }
         catch (error) {
@@ -302,25 +282,25 @@ describe("Get books tests", () => {
         }
     });
     test("get book by genre happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         await initializeBook(author_id);
         let genre = 'Fiction';
         let expectedBook = {
             id: 1,
             author_id: String(author_id),
-            title: 'Harry Potter',
-            pub_year: '2001',
+            title: BOOK_TITLE,
+            pub_year: String(PUB_YEAR),
             genre: genre
         };
-        let result = await axios.get(`${baseUrl}/getBookByGenre?genre=${genre}`);
+        let result = await axios.get(`${baseUrl}/getBooks?genre=${genre}`);
         expect(result.data).toEqual(expectedBook);
     });
     test("get book by genre invalid genre", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         await initializeBook(author_id);
         let genre = "Fantasy";
         try {
-            await axios.get(`${baseUrl}/getBookByGenre?genre=${genre}`);
+            await axios.get(`${baseUrl}/getBooks?genre=${genre}`);
             fail('this call should return a 400');
         }
         catch (error) {
@@ -334,46 +314,46 @@ describe("Get books tests", () => {
         }
     });
     test("get all books", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
+        let author_id = (await initializeAuthor()).data.id;
         await initializeBook(author_id);
         await initializeBook(author_id);
         let expectedBooks = [
             {
                 id: 1,
                 author_id: String(author_id),
-                title: 'Harry Potter',
-                pub_year: '2001',
-                genre: 'Fiction'
+                title: BOOK_TITLE,
+                pub_year: String(PUB_YEAR),
+                genre: GENRE
             },
             {
                 id: 2,
                 author_id: String(author_id),
-                title: 'Harry Potter',
-                pub_year: '2001',
-                genre: 'Fiction'
+                title: BOOK_TITLE,
+                pub_year: String(PUB_YEAR),
+                genre: GENRE
             },
         ];
-        let result = await axios.get(`${baseUrl}/getAllBooks`);
+        let result = await axios.get(`${baseUrl}/getBooks`);
         expect(result.data).toEqual(expectedBooks);
     });
 });
 //GET AUTHORS
 describe("Get authors tests", () => {
     test("get author by id happy path", async () => {
-        let author_id = await (await initializeAuthor()).data.id;
-        let expectedAuthor = {
-            id: author_id,
-            name: AUTHOR_NAME,
-            bio: AUTHOR_BIO
-        };
-        let result = await axios.get(`${baseUrl}/getAuthor?id=${author_id}`);
+        let author_id = (await initializeAuthor()).data.id;
+        let expectedAuthor = [{
+                id: author_id,
+                name: AUTHOR_NAME,
+                bio: AUTHOR_BIO
+            }];
+        let result = await axios.get(`${baseUrl}/getAuthors?id=${author_id}`);
         expect(result.data).toEqual(expectedAuthor);
     });
     test("get author invalid id", async () => {
         await initializeAuthor();
         let id = 100;
         try {
-            await axios.get(`${baseUrl}/getAuthor?id=${id}`);
+            await axios.get(`${baseUrl}/getAuthors?id=${id}`);
             fail('this call should return a 400');
         }
         catch (error) {
@@ -401,7 +381,7 @@ describe("Get authors tests", () => {
                 bio: AUTHOR_BIO
             },
         ];
-        let result = await axios.get(`${baseUrl}/getAllAuthors`);
+        let result = await axios.get(`${baseUrl}/getAuthors`);
         expect(result.data).toEqual(expectedAuthors);
     });
 });
@@ -434,7 +414,4 @@ async function isBookInTable(id, author_id, title, pub_year, genre) {
         AND genre='${genre}'
     `);
     return result.length > 0;
-}
-async function showAuthors() {
-    return await db.all("SELECT * FROM authors");
 }
