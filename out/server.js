@@ -77,7 +77,7 @@ var RequestType;
     RequestType["Author"] = "author";
     RequestType["Book"] = "book";
 })(RequestType || (RequestType = {}));
-app.post("/addAuthor", async (req, res) => {
+app.post("/api/addAuthor", async (req, res) => {
     let id = await generateUniqueID(AUTHORS);
     let name = req.body.name;
     let bio = req.body.bio;
@@ -92,7 +92,7 @@ app.post("/addAuthor", async (req, res) => {
         return res.json({ id: id });
     });
 });
-app.post("/addBook", async (req, res) => {
+app.post("/api/addBook", async (req, res) => {
     let id = await generateUniqueID(BOOKS);
     let author_id = req.body.author_id;
     if (!(await validID(AUTHORS, author_id))) {
@@ -119,7 +119,7 @@ app.post("/addBook", async (req, res) => {
         return res.json({ id: id });
     });
 });
-app.delete("/deleteResource", async (req, res) => {
+app.delete("/api/deleteResource", async (req, res) => {
     let id = Number(req.query.id);
     let type = req.query.type;
     if (type == RequestType.Author) {
@@ -142,7 +142,7 @@ app.delete("/deleteResource", async (req, res) => {
         res.sendStatus(200);
     });
 });
-app.get("/getBooks", async (req, res) => {
+app.get("/api/getBooks", async (req, res) => {
     if (req.query.id) {
         let id = Number(req.query.id);
         let book = await getResourceByID(BOOKS, id);
@@ -164,7 +164,7 @@ app.get("/getBooks", async (req, res) => {
         return res.json(books);
     }
 });
-app.get("/getAuthors", async (req, res) => {
+app.get("/api/getAuthors", async (req, res) => {
     if (req.query.id) {
         let author_id = Number(req.query.id);
         let author = await getResourceByID(AUTHORS, author_id);
@@ -181,6 +181,7 @@ app.get("/getAuthors", async (req, res) => {
 let port = 3000;
 let host = "localhost";
 let protocol = "http";
+app.use(express.static("public"));
 app.listen(port, host, () => {
     console.log(`${protocol}://${host}:${port}`);
 });

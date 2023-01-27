@@ -130,7 +130,7 @@ type createResourceResponse = Response <Resource | Error>;
 type getBooksResponse = Response <Array<Book> | Error>;
 type getAuthorsResponse = Response <Array<Author> | Error>;
 
-app.post("/addAuthor", async (req, res: createResourceResponse) => {
+app.post("/api/addAuthor", async (req, res: createResourceResponse) => {
     let id:number = await generateUniqueID(AUTHORS);
     let name:string = req.body.name;
     let bio:string = req.body.bio;
@@ -146,7 +146,7 @@ app.post("/addAuthor", async (req, res: createResourceResponse) => {
     })
 })
 
-app.post("/addBook", async (req, res: createResourceResponse) => {
+app.post("/api/addBook", async (req, res: createResourceResponse) => {
     let id:number = await generateUniqueID(BOOKS);
 
     let author_id:number = req.body.author_id;
@@ -175,7 +175,7 @@ app.post("/addBook", async (req, res: createResourceResponse) => {
     });
 });
 
-app.delete("/deleteResource", async (req, res) => {
+app.delete("/api/deleteResource", async (req, res) => {
     let id:number = Number(req.query.id);
     let type:RequestType = <RequestType> req.query.type;
 
@@ -199,7 +199,7 @@ app.delete("/deleteResource", async (req, res) => {
     })
 })
 
-app.get("/getBooks", async (req, res: getBooksResponse) => {
+app.get("/api/getBooks", async (req, res: getBooksResponse) => {
     if(req.query.id){
         let id:number = Number(req.query.id);
         let book = await getResourceByID(BOOKS, id);
@@ -222,7 +222,7 @@ app.get("/getBooks", async (req, res: getBooksResponse) => {
     }
 });
 
-app.get("/getAuthors", async (req, res: getAuthorsResponse) => {
+app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
     if(req.query.id){
         let author_id:number = Number(req.query.id);
         let author = await getResourceByID(AUTHORS, author_id);
@@ -241,6 +241,7 @@ app.get("/getAuthors", async (req, res: getAuthorsResponse) => {
 let port = 3000;
 let host = "localhost";
 let protocol = "http";
+app.use(express.static("public"));
 app.listen(port, host, () => {
     console.log(`${protocol}://${host}:${port}`);
 });

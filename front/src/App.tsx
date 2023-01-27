@@ -1,24 +1,34 @@
 import React from 'react';
-import logo from './logo.svg';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import Home from './Pages/Home';
+import AddAuthor from './Pages/AddAuthor';
+import AddBook from './Pages/AddBook';
+import SearchBooks from './Pages/SearchBooks';
+import { Navbar, Container, NavDropdown, Nav } from 'react-bootstrap';
 import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Navbar>
+        <Nav>
+        <Nav.Link href="/">Home</Nav.Link>
+        <Nav.Link href="/addBook">Add Book</Nav.Link>
+        <Nav.Link href="/addAuthor">Add Author</Nav.Link>
+        <Nav.Link href="/searchBooks">Search Books</Nav.Link>
+        </Nav>
+      </Navbar>
+      <Router>
+        <div>
+          <Routes>
+            <Route path="/" element={<Home />} />       
+            <Route path="/addBook" element={<AddBook />} />
+            <Route path="/addAuthor" element={<AddAuthor />} />
+            <Route path="/searchBooks" element={<SearchBooks />} />
+          </Routes>
+        </div>
+      </Router>
     </div>
   );
 }
