@@ -3,6 +3,7 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
+import path from "path";
 const BOOKS = "books";
 const AUTHORS = "authors";
 let app = express();
@@ -63,8 +64,8 @@ async function deleteResource(id, type) {
 async function deleteAuthorBooks(id) {
     return await db.run(`DELETE FROM books WHERE author_id=${id}`);
 }
-async function getBookByGenre(genre) {
-    return await db.get(`SELECT * FROM books WHERE genre='${genre}'`);
+async function getBooksByGenre(genre) {
+    return await db.all(`SELECT * FROM books WHERE genre='${genre}'`);
 }
 async function getResourceByID(type, id) {
     return await db.get(`SELECT * FROM ${type} WHERE id=${id}`);
@@ -77,7 +78,7 @@ var RequestType;
     RequestType["Author"] = "author";
     RequestType["Book"] = "book";
 })(RequestType || (RequestType = {}));
-app.post("/addAuthor", async (req, res) => {
+app.post("/api/addAuthor", async (req, res) => {
     let id = await generateUniqueID(AUTHORS);
     let name = req.body.name;
     let bio = req.body.bio;
@@ -92,7 +93,7 @@ app.post("/addAuthor", async (req, res) => {
         return res.json({ id: id });
     });
 });
-app.post("/addBook", async (req, res) => {
+app.post("/api/addBook", async (req, res) => {
     let id = await generateUniqueID(BOOKS);
     let author_id = req.body.author_id;
     if (!(await validID(AUTHORS, author_id))) {
@@ -119,7 +120,7 @@ app.post("/addBook", async (req, res) => {
         return res.json({ id: id });
     });
 });
-app.delete("/deleteResource", async (req, res) => {
+app.delete("/api/deleteResource", async (req, res) => {
     let id = Number(req.query.id);
     let type = req.query.type;
     if (type == RequestType.Author) {
@@ -142,7 +143,7 @@ app.delete("/deleteResource", async (req, res) => {
         res.sendStatus(200);
     });
 });
-app.get("/getBooks", async (req, res) => {
+app.get("/api/getBooks", async (req, res) => {
     if (req.query.id) {
         let id = Number(req.query.id);
         let book = await getResourceByID(BOOKS, id);
@@ -153,18 +154,18 @@ app.get("/getBooks", async (req, res) => {
     }
     else if (req.query.genre) {
         let genre = String(req.query.genre);
-        let book = await getBookByGenre(genre);
+        let books = await getBooksByGenre(genre);
         if (!await validGenre(genre)) {
             return res.status(400).json({ error: "genre doesn't exist in database" });
         }
-        return res.json(book);
+        return res.json(books);
     }
     else {
         let books = await getAllOfType(BOOKS);
         return res.json(books);
     }
 });
-app.get("/getAuthors", async (req, res) => {
+app.get("/api/getAuthors", async (req, res) => {
     if (req.query.id) {
         let author_id = Number(req.query.id);
         let author = await getResourceByID(AUTHORS, author_id);
@@ -181,6 +182,10 @@ app.get("/getAuthors", async (req, res) => {
 let port = 3000;
 let host = "localhost";
 let protocol = "http";
+app.use(express.static("public"));
+app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'out', 'public', 'index.html'));
+});
 app.listen(port, host, () => {
     console.log(`${protocol}://${host}:${port}`);
 });
