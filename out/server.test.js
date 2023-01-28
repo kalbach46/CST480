@@ -5,7 +5,8 @@ import * as url from "url";
 let port = 3000;
 let host = "localhost";
 let protocol = "http";
-let baseUrl = `${protocol}://${host}:${port}`;
+let api = "api";
+let baseUrl = `${protocol}://${host}:${port}/${api}`;
 let __dirname = url.fileURLToPath(new URL("..", import.meta.url));
 let dbfile = `${__dirname}database.db`;
 let db = await open({
@@ -285,15 +286,37 @@ describe("Get books tests", () => {
         let author_id = (await initializeAuthor()).data.id;
         await initializeBook(author_id);
         let genre = 'Fiction';
-        let expectedBook = {
-            id: 1,
-            author_id: String(author_id),
-            title: BOOK_TITLE,
-            pub_year: String(PUB_YEAR),
-            genre: genre
-        };
+        let expectedBook = [{
+                id: 1,
+                author_id: String(author_id),
+                title: BOOK_TITLE,
+                pub_year: String(PUB_YEAR),
+                genre: genre
+            }];
         let result = await axios.get(`${baseUrl}/getBooks?genre=${genre}`);
         expect(result.data).toEqual(expectedBook);
+    });
+    test("get multiple books by genre happy path", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        await initializeBook(author_id);
+        await initializeBook(author_id);
+        let genre = 'Fiction';
+        let expectedBooks = [{
+                id: 1,
+                author_id: String(author_id),
+                title: BOOK_TITLE,
+                pub_year: String(PUB_YEAR),
+                genre: genre
+            },
+            {
+                id: 2,
+                author_id: String(author_id),
+                title: BOOK_TITLE,
+                pub_year: String(PUB_YEAR),
+                genre: genre
+            }];
+        let result = await axios.get(`${baseUrl}/getBooks?genre=${genre}`);
+        expect(result.data).toEqual(expectedBooks);
     });
     test("get book by genre invalid genre", async () => {
         let author_id = (await initializeAuthor()).data.id;

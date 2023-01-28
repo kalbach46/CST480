@@ -63,8 +63,8 @@ async function deleteResource(id, type) {
 async function deleteAuthorBooks(id) {
     return await db.run(`DELETE FROM books WHERE author_id=${id}`);
 }
-async function getBookByGenre(genre) {
-    return await db.get(`SELECT * FROM books WHERE genre='${genre}'`);
+async function getBooksByGenre(genre) {
+    return await db.all(`SELECT * FROM books WHERE genre='${genre}'`);
 }
 async function getResourceByID(type, id) {
     return await db.get(`SELECT * FROM ${type} WHERE id=${id}`);
@@ -153,11 +153,11 @@ app.get("/api/getBooks", async (req, res) => {
     }
     else if (req.query.genre) {
         let genre = String(req.query.genre);
-        let book = await getBookByGenre(genre);
+        let books = await getBooksByGenre(genre);
         if (!await validGenre(genre)) {
             return res.status(400).json({ error: "genre doesn't exist in database" });
         }
-        return res.json(book);
+        return res.json(books);
     }
     else {
         let books = await getAllOfType(BOOKS);

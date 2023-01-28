@@ -84,8 +84,8 @@ async function deleteAuthorBooks(id:number){
     );
 }
 
-async function getBookByGenre(genre:string){
-    return await db.get(
+async function getBooksByGenre(genre:string){
+    return await db.all(
         `SELECT * FROM books WHERE genre='${genre}'`
     );
 }
@@ -210,11 +210,11 @@ app.get("/api/getBooks", async (req, res: getBooksResponse) => {
 
     } else if (req.query.genre){
         let genre:string = String(req.query.genre);
-        let book = await getBookByGenre(genre);
+        let books = await getBooksByGenre(genre);
         if(!await validGenre(genre)){
             return res.status(400).json({ error : "genre doesn't exist in database"})
         }
-        return res.json(book);
+        return res.json(books);
 
     } else {
         let books:Array<Book> = await getAllOfType(BOOKS);
