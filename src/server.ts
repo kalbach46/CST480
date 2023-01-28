@@ -3,6 +3,7 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
+import path from "path";
 
 
 const BOOKS:string = "books";
@@ -242,6 +243,9 @@ let port = 3000;
 let host = "localhost";
 let protocol = "http";
 app.use(express.static("public"));
+app.get('/*', function(req, res) {
+    res.sendFile(path.join(__dirname, 'out', 'public', 'index.html'));
+})
 app.listen(port, host, () => {
     console.log(`${protocol}://${host}:${port}`);
 });

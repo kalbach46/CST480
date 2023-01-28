@@ -1,6 +1,6 @@
 import axios from "axios";
 
-let port = 3001;
+let port = 3000;
 let host = 'localhost';
 let protocol = 'http';
 
