@@ -63,15 +63,21 @@ async function addBook(id:number, author_id:number, title:string, pub_year:numbe
     return await statement.run();
 }
 
-async function editBook(id:number, title:string){
+async function editBook(id:number, author_id:number, title:string, pub_year:number, genre:string){
     let statement = await db.prepare(
         `UPDATE books 
         SET 
-            title=case when ? <> '' then title else ? end
+            author_id=IfNull(?, author_id),
+            title=IfNull(?, title),
+            pub_year=IfNull(?, pub_year),
+            genre=IfNull(?, genre)
         WHERE id=?`
     );
     await statement.bind([
+        author_id ? author_id : null,
         title ? title : null,
+        pub_year ? pub_year : null,
+        genre ? genre : null,
         id
     ]);
     return await statement.run();
@@ -290,7 +296,7 @@ app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
 
 app.put("/api/editBook", async (req, res: resourceResponse) => {
     // let book = await getResourceByID(BOOKS, Number(req.query.id));
-    editBook(Number(req.query.id), req.body.title).then(() => {
+    editBook(Number(req.query.id), req.body.author_id, req.body.title, req.body.pub_year, req.body.genre).then(() => {
         return res.json({id : Number(req.query.id)})
     })
 })
