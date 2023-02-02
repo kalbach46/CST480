@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Table, Container, Row, Col} from 'react-bootstrap';
-import axios from '../axios';
+import axios from 'axios';
 import Book from '../Models/Book';
 import Author from '../Models/Author';
 

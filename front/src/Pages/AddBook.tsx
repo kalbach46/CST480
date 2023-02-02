@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {Form, Container, Row, Col, Button} from 'react-bootstrap';
 import {useForm, SubmitHandler} from 'react-hook-form';
 import {ErrorMessage} from '@hookform/error-message';
-import axios from '../axios';
+import axios from 'axios';
 import 'react-datepicker/dist/react-datepicker.css';
 import Author from '../Models/Author';
 

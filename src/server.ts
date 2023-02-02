@@ -4,13 +4,14 @@ import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
 import path from "path";
-
+import cors from "cors";
 
 const BOOKS:string = "books";
 const AUTHORS:string = "authors";
 
 let app = express();
 app.use(express.json());
+// app.use(cors);
 
 // create database "connection"
 // use absolute path to avoid this issue
@@ -37,58 +38,107 @@ async function generateUniqueID(table:string):Promise<number>{
 }
 
 async function addAuthor(id: number, name: string, bio: string) {
-    return await db.run(
-        `INSERT INTO authors(id, name, bio) VALUES(
-            '${id}', 
-            '${name}', 
-            '${bio}'
-        )`
+    let statement = await db.prepare(
+        'INSERT INTO authors(id, name, bio) VALUES(?, ?, ?)'
     );
+    await statement.bind([
+        id, 
+        name, 
+        bio
+    ]);
+    return await statement.run();
 }
 
 async function addBook(id:number, author_id:number, title:string, pub_year:number, genre:string){
-    return await db.run(
-        `INSERT INTO books(id, author_id, title, pub_year, genre) VALUES(
-            '${id}',
-            '${author_id}',
-            '${title}',
-            '${pub_year}',
-            '${genre}'
-        )`
+    let statement = await db.prepare(
+        'INSERT INTO books(id, author_id, title, pub_year, genre) VALUES(?, ?, ?, ?, ?)'
     );
+    await statement.bind([
+        id,
+        author_id,
+        title,
+        pub_year,
+        genre
+    ]);
+    return await statement.run();
+}
+
+async function editBook(id:number, title:string){
+    let statement = await db.prepare(
+        `UPDATE books 
+        SET 
+            title=case when ? <> '' then title else ? end
+        WHERE id=?`
+    );
+    await statement.bind([
+        title ? title : null,
+        id
+    ]);
+    return await statement.run();
 }
 
 async function validGenre(genre:string):Promise<boolean>{
-    let out = await db.all(`SELECT genre FROM books WHERE genre='${genre}'`);
+    let statement = await db.prepare(
+        'SELECT genre FROM books WHERE genre=?'
+    );
+    await statement.bind([
+        genre
+    ]);
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function validID(type:string, id:number){
-    let out = await db.all(`SELECT ${id} from ${type} WHERE id=${id}`);
+    let statement = await db.prepare(
+        `SELECT ? from ${type} WHERE id=?`
+    );
+    await statement.bind([
+        id,
+        id
+    ])
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function authorHasBooks(id:number){
-    let out = await db.all(`SELECT id FROM books WHERE author_id=${id}`);
+    let statement = await db.prepare(
+        'SELECT id FROM books WHERE author_id=?'
+    );
+    await statement.bind([
+        id
+    ]);
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function deleteResource(id:number, type:string){
-    return await db.run(
-        `DELETE FROM ${type}s WHERE id=${id}`
+    let statement = await db.prepare(
+        `DELETE FROM ${type}s WHERE id=?`
     );
+    await statement.bind([
+        id
+    ]);
+    return await statement.run();
 }
 
 async function deleteAuthorBooks(id:number){
-    return await db.run(
-        `DELETE FROM books WHERE author_id=${id}`
+    let statement = await db.prepare(
+        'DELETE FROM books WHERE author_id=?'
     );
+    await statement.bind([
+        id
+    ]);
+    return await statement.run();
 }
 
 async function getBooksByGenre(genre:string){
-    return await db.all(
-        `SELECT * FROM books WHERE genre='${genre}'`
+    let statement = await db.prepare(
+        'SELECT * FROM books WHERE genre=?'
     );
+    await statement.bind([
+        genre
+    ]);
+    return await statement.all();
 }
 
 async function getResourceByID(type:string, id:number){
@@ -127,11 +177,11 @@ interface Author {
     bio: string
 }
 
-type createResourceResponse = Response <Resource | Error>;
+type resourceResponse = Response <Resource | Error>;
 type getBooksResponse = Response <Array<Book> | Error>;
 type getAuthorsResponse = Response <Array<Author> | Error>;
 
-app.post("/api/addAuthor", async (req, res: createResourceResponse) => {
+app.post("/api/addAuthor", async (req, res: resourceResponse) => {
     let id:number = await generateUniqueID(AUTHORS);
     let name:string = req.body.name;
     let bio:string = req.body.bio;
@@ -147,7 +197,7 @@ app.post("/api/addAuthor", async (req, res: createResourceResponse) => {
     })
 })
 
-app.post("/api/addBook", async (req, res: createResourceResponse) => {
+app.post("/api/addBook", async (req, res: resourceResponse) => {
     let id:number = await generateUniqueID(BOOKS);
 
     let author_id:number = req.body.author_id;
@@ -236,6 +286,13 @@ app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
         let authors:Array<Author> = await getAllOfType(AUTHORS);
         return res.json(authors);
     }
+})
+
+app.put("/api/editBook", async (req, res: resourceResponse) => {
+    // let book = await getResourceByID(BOOKS, Number(req.query.id));
+    editBook(Number(req.query.id), req.body.title).then(() => {
+        return res.json({id : Number(req.query.id)})
+    })
 })
 
 
