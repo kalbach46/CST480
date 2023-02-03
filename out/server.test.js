@@ -406,7 +406,6 @@ describe("Edit book tests", () => {
         let pub_year = PUB_YEAR;
         let genre = GENRE;
         let result = await axios.put(`${baseUrl}/editBook?id=${id}`, {});
-        console.log("RES:", result);
         expect(await isBookInTable(result.data.id, author_id, title, pub_year, genre)).toBeTruthy();
     });
     test("edit no book id", async () => {
@@ -442,7 +441,9 @@ describe("Edit book tests", () => {
     });
     test("edit author happy path", async () => {
         let author_id = (await initializeAuthor()).data.id;
+        console.log(author_id);
         let newAuthorId = (await initializeAuthor()).data.id;
+        console.log(newAuthorId);
         let id = (await initializeBook(author_id)).data.id;
         let title = BOOK_TITLE;
         let pub_year = PUB_YEAR;

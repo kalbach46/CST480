@@ -1,10 +1,7 @@
 import {useState} from 'react';
-import {Form, Container, Row, Col, Button} from 'react-bootstrap';
-// import {Grid, TextField, FormControl, FormControlLabel, FormLabel, Select, MenuItem, Slider, Button} from '@mui/material';
-import {useForm, SubmitHandler} from 'react-hook-form';
-import {ErrorMessage} from '@hookform/error-message';
+import {TextField, InputLabel, Button} from '@mui/material';
+import {Controller, useForm, SubmitHandler} from 'react-hook-form';
 import axios from 'axios';
-import Paper from '@mui/material/Paper';
 
 type FormValues = {
     name: string;
@@ -12,15 +9,7 @@ type FormValues = {
 }
 
 export default function AddAuthor() {
-    const {register, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
-    const defaultValues = {
-        name: "",
-        age: 0,
-        sex: "",
-        os: "",
-        favoriteNumber: 0
-    };
-    const [formValues, setFormValues] = useState(defaultValues);
+    const {control, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
     const [authorID, setAuthorID] = useState<number>();
     const [error, setError] = useState<string>('');
 
@@ -44,31 +33,61 @@ export default function AddAuthor() {
         getData();
     };
 
-    // const handleInputChange = (e) => {
-    //     const {name, value } = e.target;
-    //     setFormValues({
-    //         ...formValues,
-    //         [name]: value
-    //     })
-    // }
-
     return (
         <div>
-            {/* <TextField
-            id="name-input"
-            name="name"
-            label="Name"
-            type="text"
-            value={formValues.name}
-            onChange={handleInputChange}
-            />
-            <TextField
-            id="age-input"
-            name="age"
-            label="Age"
-            type="number"
-            value={formValues.age} */}
-            <Form onSubmit={handleSubmit(onSubmit)}>
+            <h2>Add An Author</h2>
+            <Controller
+                        name="name"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            required:'This is required.', 
+                            maxLength: {
+                                value: 30,
+                                message: 'Author name cannot be more than 30 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Author Name</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="bio"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            required:'This is required.', 
+                            maxLength: {
+                                value: 150,
+                                message: 'Bio cannot be more than 150 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Author Bio</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <div>
+                        <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Author</Button>
+                    </div>
+            {/* <Form onSubmit={handleSubmit(onSubmit)}>
                 <Container>
                     <Row className='mt-3'>
                         <Col xs={6}>
@@ -115,7 +134,7 @@ export default function AddAuthor() {
                         <p>{!authorID ? '' : `Successfully added author with id ${authorID}`}</p>
                     </Row>
                 </Container>                              
-            </Form>
+            </Form> */}
             <div>
                 {error}
             </div>

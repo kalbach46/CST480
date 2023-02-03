@@ -46,6 +46,7 @@ export default function Home() {
 
     return (
         <TableContainer>
+            <h2>THE BOOK BARN</h2>
             <Table>
                 <TableHead>
                     <TableRow style={{background:"#c0c0c0"}}>

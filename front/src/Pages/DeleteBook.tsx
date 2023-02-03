@@ -1,9 +1,7 @@
 import {useEffect, useState} from 'react';
-import {Form, Container, Row, Col, Button} from 'react-bootstrap';
-import {useForm, SubmitHandler} from 'react-hook-form';
-import {ErrorMessage} from '@hookform/error-message';
+import {useForm, SubmitHandler, Controller} from 'react-hook-form';
 import 'react-datepicker/dist/react-datepicker.css';
-import {TableContainer, Table, TableHead, TableRow, TableCell, TableBody} from '@mui/material';
+import {Grid, FormHelperText, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, InputLabel, Select, MenuItem, Button} from '@mui/material';
 import axios from 'axios';
 import Book from '../Models/Book';
 
@@ -12,11 +10,12 @@ type FormValues = {
 };
 
 export default function DeleteBook() {
-    const { register, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
+    const { handleSubmit, control, formState: {errors}, reset} = useForm<FormValues>();
     const [books, setBooks] = useState<Array<Book>>([]);
     const [booksError, setBooksError] = useState<string>('');
 
     const onSubmit: SubmitHandler<FormValues> = data => {
+        console.log(data);
         let book_id:number = data.book_id;
         reset();
         const getData = async () => {
@@ -47,37 +46,39 @@ export default function DeleteBook() {
 
     return (
         <div>
+            <h2>Delete Books</h2>
             {books.length===0 ? `Can't delete any books if there are no books! add a book first` : 
                 <div>
-                    <Form onSubmit={handleSubmit(onSubmit)}>
-                        <Container>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Book ID</Form.Label>
-                                        <Form.Select {...register('book_id')}
-                                            placeholder='Select Book ID'>
-                                            {
-                                                books.map(book => {
-                                                    return (
-                                                        <option key={book.id} value={book.id}>{book.id}</option>
-                                                    )
-                                                })
-                                            }
-                                        </Form.Select>
-                                        <ErrorMessage errors={errors} name='book_id'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col>
-                                    <Button type='submit'> 
-                                        Delete Book
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </Container>                              
-                    </Form>
+                    <Controller
+                        name="book_id"
+                        control={control}
+                        defaultValue={books[0].id}
+                        rules={{required:'This field is required.'}}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12}>
+                                        <InputLabel>Book ID</InputLabel>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Select
+                                            label="Book"
+                                            value={value}
+                                            onChange={onChange}
+                                            error={!!error}
+                                        >
+                                        <FormHelperText>{error ? error.message : null}</FormHelperText>
+                                        {books.map(book => {
+                                            return (
+                                                <MenuItem key={book.id} value={book.id}>{book.id}</MenuItem>
+                                            )
+                                        })}
+                                        </Select>
+                                    </Grid>
+                                </Grid>
+                        )}
+                    />
+                    <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Delete Book</Button>
                     <TableContainer>
                         <Table>
                             <TableHead>

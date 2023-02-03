@@ -1,33 +1,36 @@
 import {useEffect, useState} from 'react';
-import {Form, Container, Row, Col, Button} from 'react-bootstrap';
-import {useForm, SubmitHandler} from 'react-hook-form';
-import {ErrorMessage} from '@hookform/error-message';
+import {useForm, SubmitHandler, Controller} from 'react-hook-form';
 import 'react-datepicker/dist/react-datepicker.css';
-import {TableContainer, Table, TableHead, TableRow, TableCell, TableBody} from '@mui/material';
+import {TextField, FormHelperText, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, InputLabel, Select, MenuItem, Button} from '@mui/material';
 import axios from 'axios';
 import Book from '../Models/Book';
+import Author from '../Models/Author';
 
 type FormValues = {
     book_id:number,
+    author_id:number,
     title:string,
     pub_year:number,
     genre:string
 };
 
 export default function EditBook() {
-    const { register, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
+    const { control, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
     const [books, setBooks] = useState<Array<Book>>([]);
+    const [authors, setAuthors] = useState<Array<Author>>([]);
     const [booksError, setBooksError] = useState<string>('');
+    const [authorsError, setauthorsError] = useState<string>('');
 
     const onSubmit: SubmitHandler<FormValues> = data => {
-        let body = {};
         let book_id:number = data.book_id;
+        let author_id:number = data.author_id;
         let title:string = data.title;
         let pub_year:number = data.pub_year;
         let genre:string = data.genre;
         reset();
         const getData = async () => {
-            axios.put(`/api/editBook?id=${book_id}`, {title:title, pub_year:pub_year, genre:genre});
+            console.log(data);
+            axios.put(`/api/editBook?id=${book_id}`, {author_id:author_id, title:title, pub_year:pub_year, genre:genre});
         }
         getData();
     };
@@ -45,7 +48,19 @@ export default function EditBook() {
                 setBooksError(error.response.data.error);
             });
         }
+        const getAuthors = async () => {
+            axios.get('/api/getAuthors')
+            .then((result) => {
+                setAuthors(result.data);
+                setauthorsError('');
+            })
+            .catch((error) => {
+                setAuthors([]);
+                setauthorsError(error.response.data.error);
+            });
+        }
         getBooks();
+        getAuthors();
     }, [onSubmit]);
 
     const sortBooks = (books:Array<Book>) => {
@@ -54,90 +69,134 @@ export default function EditBook() {
 
     return (
         <div>
+            <h2>Edit Book Properties</h2>
             {books.length===0 ? `Can't edit any books if there are no books! add a book first` : 
                 <div>
-                    <Form onSubmit={handleSubmit(onSubmit)}>
-                        <Container>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Book ID</Form.Label>
-                                        <Form.Select {...register('book_id')}
-                                            placeholder='Select Book ID'>
-                                            {
-                                                books.map(book => {
-                                                    return (
-                                                        <option key={book.id} value={book.id}>{book.id}</option>
-                                                    )
-                                                })
-                                            }
-                                        </Form.Select>
-                                        <ErrorMessage errors={errors} name='book_id'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Book Title</Form.Label>
-                                        <Form.Control {...register('title', 
-                                        {
-                                            maxLength: {
-                                                value: 40,
-                                                message: 'Book title cannot be more than 40 chars.'
-                                            }
-                                        })} 
-                                        placeholder='Enter Book Title'></Form.Control>
-                                        <ErrorMessage errors={errors} name='title'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Published Year</Form.Label>
-                                        <Form.Control type='number' {...register('pub_year',
-                                        {
-                                            valueAsNumber: true,
-                                            max: {
-                                                value: 2023,
-                                                message: 'Year must be between 1000-2023.'
-                                            },
-                                            min: {
-                                                value: 1000,
-                                                message: 'Year must be between 1000-2023.'
-                                            } 
-                                        })}
-                                        placeholder='Enter Year'></Form.Control>
-                                        <ErrorMessage errors={errors} name='pub_year'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Genre</Form.Label>
-                                        <Form.Control {...register('genre', 
-                                        {
-                                            maxLength: {
-                                                value: 20,
-                                                message: 'Genre cannot be more than 20 chars.'
-                                            }
-                                        })} 
-                                        placeholder='Enter Genre'></Form.Control>
-                                        <ErrorMessage errors={errors} name='genre'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col>
-                                    <Button type='submit'> 
-                                        Edit Book
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </Container>                              
-                    </Form>
+                    <Controller
+                        name="book_id"
+                        control={control}
+                        defaultValue={books[0].id}
+                        rules={{required:'This field is required.'}}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Book ID</InputLabel>
+                                    <Select
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                    >
+                                    <FormHelperText>{error ? error.message : null}</FormHelperText>
+                                    {books.map(book => {
+                                        return (
+                                            <MenuItem key={book.id} value={book.id}>{book.id}</MenuItem>
+                                        )
+                                    })}
+                                    </Select>
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="author_id"
+                        control={control}
+                        defaultValue={authors[0].id}
+                        rules={{required:'This field is required.'}}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Author ID</InputLabel>
+                                    <Select
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                    >
+                                    <FormHelperText>{error ? error.message : null}</FormHelperText>
+                                    {authors.map(author => {
+                                        return (
+                                            <MenuItem key={author.id} value={author.id}>{author.id}</MenuItem>
+                                        )
+                                    })}
+                                    </Select>
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="title"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            maxLength: {
+                                value: 40,
+                                message: 'Book title cannot be more than 40 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Book Title</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="pub_year"
+                        control={control}
+                        defaultValue={1000}
+                        rules={{
+                            max: {
+                                value: 2023,
+                                message: 'Year must be between 1000-2023.'
+                            },
+                            min: {
+                                value: 1000,
+                                message: 'Year must be between 1000-2023.'
+                            } 
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Published Year</InputLabel>
+                                    <TextField
+                                        type="number"
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="genre"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            maxLength: {
+                                value: 20,
+                                message: 'Genre cannot be more than 20 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Genre</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <div>
+                        <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Edit Book</Button>
+                    </div>
                     <TableContainer>
                         <Table>
                             <TableHead>

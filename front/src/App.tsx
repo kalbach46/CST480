@@ -12,7 +12,7 @@ import './App.css';
 function App() {
   return (
     <div>
-      <AppBar position="sticky" style={{ background: '#f0f0f0'}}>
+      <AppBar position="sticky" style={{marginBottom:'20px', background: '#f0f0f0'}}>
         <Toolbar>
           <Button href="/">Home</Button>
           <Button href="/addBook">Add Book</Button>

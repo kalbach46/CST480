@@ -1,7 +1,6 @@
 import {useEffect, useState} from 'react';
-import {Form, Container, Row, Col, Button} from 'react-bootstrap';
-import {useForm, SubmitHandler} from 'react-hook-form';
-import {ErrorMessage} from '@hookform/error-message';
+import {TextField, FormHelperText, InputLabel, Select, MenuItem, Button} from '@mui/material';
+import {Controller, useForm, SubmitHandler} from 'react-hook-form';
 import axios from 'axios';
 import 'react-datepicker/dist/react-datepicker.css';
 import Author from '../Models/Author';
@@ -14,7 +13,7 @@ type FormValues = {
 }
 
 export default function AddBook() {
-    const { register, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
+    const { control, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
     const [bookID, setBookID] = useState<number>();
     const [authorIDs, setAuthorIDs] = useState<Array<number>>([]);
     const [error, setError] = useState<string>('');
@@ -62,96 +61,113 @@ export default function AddBook() {
 
     return (
         <div>
+            <h2>Add A Book</h2>
             {authorIDs.length===0 ? `Can't add any books if there are no authors! add an author first` : 
                 <div>
-                    <Form onSubmit={handleSubmit(onSubmit)}>
-                        <Container>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Author ID</Form.Label>
-                                        <Form.Select {...register('author_id')}
-                                            placeholder='Select Author ID'>
-                                            {
-                                                authorIDs.map(id => {
-                                                    return (
-                                                        <option key={id} value={id}>{id}</option>
-                                                    )
-                                                })
-                                            }
-                                        </Form.Select>
-                                        <ErrorMessage errors={errors} name='author_id'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Book Title</Form.Label>
-                                        <Form.Control {...register('title', 
-                                        {
-                                            required:'This is required.', 
-                                            maxLength: {
-                                                value: 40,
-                                                message: 'Book title cannot be more than 40 chars.'
-                                            }
-                                        })} 
-                                        placeholder='Enter Book Title'></Form.Control>
-                                        <ErrorMessage errors={errors} name='title'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Published Year</Form.Label>
-                                        <Form.Control type='number' {...register('pub_year',
-                                        {
-                                            valueAsNumber: true,
-                                            required:'This is required.',
-                                            max: {
-                                                value: 2023,
-                                                message: 'Year must be between 1000-2023.'
-                                            },
-                                            min: {
-                                                value: 1000,
-                                                message: 'Year must be between 1000-2023.'
-                                            } 
-                                        })}
-                                        placeholder='Enter Year'></Form.Control>
-                                        <ErrorMessage errors={errors} name='pub_year'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col xs={6}>
-                                    <Form.Group>
-                                        <Form.Label>Genre</Form.Label>
-                                        <Form.Control {...register('genre', 
-                                        {
-                                            required:'This is required.', 
-                                            maxLength: {
-                                                value: 20,
-                                                message: 'Genre cannot be more than 20 chars.'
-                                            }
-                                        })} 
-                                        placeholder='Enter Genre'></Form.Control>
-                                        <ErrorMessage errors={errors} name='genre'/>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                            <Row className='mt-3'>
-                                <Col>
-                                    <Button type='submit'> 
-                                        Add New Book
-                                    </Button>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <p>{!bookID ? '' : `Successfully added book with id ${bookID}`}</p>
-                            </Row>
-                        </Container>                              
-                    </Form>
+                    <Controller
+                        name="author_id"
+                        control={control}
+                        defaultValue={authorIDs[0]}
+                        rules={{required:'This field is required.'}}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Author ID</InputLabel>
+                                    <Select
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                    >
+                                    <FormHelperText>{error ? error.message : null}</FormHelperText>
+                                    {authorIDs.map(id => {
+                                        return (
+                                            <MenuItem key={id} value={id}>{id}</MenuItem>
+                                        )
+                                    })}
+                                    </Select>
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="title"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            required:'This field is required.',
+                            maxLength: {
+                                value: 40,
+                                message: 'Book title cannot be more than 40 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Book Title</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="pub_year"
+                        control={control}
+                        defaultValue={1000}
+                        rules={{
+                            required:'This field is required.',
+                            max: {
+                                value: 2023,
+                                message: 'Year must be between 1000-2023.'
+                            },
+                            min: {
+                                value: 1000,
+                                message: 'Year must be between 1000-2023.'
+                            } 
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Published Year</InputLabel>
+                                    <TextField
+                                        type="number"
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <Controller
+                        name="genre"
+                        control={control}
+                        defaultValue={''}
+                        rules={{
+                            required:'This field is required.',
+                            maxLength: {
+                                value: 20,
+                                message: 'Genre cannot be more than 20 chars.'
+                            }
+                        }}
+                        render={({
+                            field: {onChange, value}, fieldState: { error }}) => (
+                                <>
+                                    <InputLabel>Genre</InputLabel>
+                                    <TextField
+                                        value={value}
+                                        onChange={onChange}
+                                        error={!!error}
+                                        helperText={error ? error.message : null}
+                                    />
+                                </>
+                        )}
+                    />
+                    <div>
+                        <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Book</Button>
+                    </div>
                     <div>
                         {error}
                     </div>

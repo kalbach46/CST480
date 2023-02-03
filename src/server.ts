@@ -295,6 +295,7 @@ app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
 })
 
 app.put("/api/editBook", async (req, res: resourceResponse) => {
+    console.log(req.body);
     if(req.query.id){
         let id:number = Number(req.query.id);
         if(!await validID(BOOKS, id)){
