@@ -87,54 +87,6 @@ export default function AddAuthor() {
                     <div>
                         <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Author</Button>
                     </div>
-            {/* <Form onSubmit={handleSubmit(onSubmit)}>
-                <Container>
-                    <Row className='mt-3'>
-                        <Col xs={6}>
-                            <Form.Group>
-                                <Form.Label>Author Name</Form.Label>
-                                <Form.Control {...register('name', 
-                                {
-                                    required:'This is required.', 
-                                    maxLength: {
-                                        value: 30,
-                                        message: 'Author name cannot be more than 30 chars.'
-                                    }
-                                })} 
-                                placeholder='Enter Author Name'></Form.Control>
-                                <ErrorMessage errors={errors} name='name'/>
-                            </Form.Group>
-                        </Col>
-                    </Row>
-                    <Row className='mt-3'>
-                        <Col xs={6}>
-                            <Form.Group>
-                                <Form.Label>Bio</Form.Label>
-                                <Form.Control {...register('bio', 
-                                {
-                                    required:'This is required.', 
-                                    maxLength: {
-                                        value: 150,
-                                        message: 'Bio cannot be more than 150 chars.'
-                                    }
-                                })} 
-                                placeholder='Enter Author Bio'></Form.Control>
-                                <ErrorMessage errors={errors} name='bio'/>
-                            </Form.Group>
-                        </Col>
-                    </Row>
-                    <Row className='mt-3'>
-                        <Col>
-                            <Button type='submit'> 
-                                Add New Author
-                            </Button>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <p>{!authorID ? '' : `Successfully added author with id ${authorID}`}</p>
-                    </Row>
-                </Container>                              
-            </Form> */}
             <div>
                 {error}
             </div>
