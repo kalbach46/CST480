@@ -1,8 +1,10 @@
 import {useState} from 'react';
 import {Form, Container, Row, Col, Button} from 'react-bootstrap';
+// import {Grid, TextField, FormControl, FormControlLabel, FormLabel, Select, MenuItem, Slider, Button} from '@mui/material';
 import {useForm, SubmitHandler} from 'react-hook-form';
 import {ErrorMessage} from '@hookform/error-message';
 import axios from 'axios';
+import Paper from '@mui/material/Paper';
 
 type FormValues = {
     name: string;
@@ -11,6 +13,14 @@ type FormValues = {
 
 export default function AddAuthor() {
     const {register, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
+    const defaultValues = {
+        name: "",
+        age: 0,
+        sex: "",
+        os: "",
+        favoriteNumber: 0
+    };
+    const [formValues, setFormValues] = useState(defaultValues);
     const [authorID, setAuthorID] = useState<number>();
     const [error, setError] = useState<string>('');
 
@@ -34,8 +44,30 @@ export default function AddAuthor() {
         getData();
     };
 
+    // const handleInputChange = (e) => {
+    //     const {name, value } = e.target;
+    //     setFormValues({
+    //         ...formValues,
+    //         [name]: value
+    //     })
+    // }
+
     return (
         <div>
+            {/* <TextField
+            id="name-input"
+            name="name"
+            label="Name"
+            type="text"
+            value={formValues.name}
+            onChange={handleInputChange}
+            />
+            <TextField
+            id="age-input"
+            name="age"
+            label="Age"
+            type="number"
+            value={formValues.age} */}
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <Container>
                     <Row className='mt-3'>

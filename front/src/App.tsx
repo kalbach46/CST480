@@ -4,20 +4,24 @@ import Home from './Pages/Home';
 import AddAuthor from './Pages/AddAuthor';
 import AddBook from './Pages/AddBook';
 import SearchBooks from './Pages/SearchBooks';
-import { Navbar, Nav } from 'react-bootstrap';
+import DeleteBook from './Pages/DeleteBook';
+import EditBook from './Pages/EditBook';
+import {AppBar, Button, Toolbar} from '@mui/material';
 import './App.css';
 
 function App() {
   return (
     <div>
-      <Navbar>
-        <Nav>
-        <Nav.Link href="/">Home</Nav.Link>
-        <Nav.Link href="/addBook">Add Book</Nav.Link>
-        <Nav.Link href="/addAuthor">Add Author</Nav.Link>
-        <Nav.Link href="/searchBooks">Search Books</Nav.Link>
-        </Nav>
-      </Navbar>
+      <AppBar position="sticky" style={{ background: '#f0f0f0'}}>
+        <Toolbar>
+          <Button href="/">Home</Button>
+          <Button href="/addBook">Add Book</Button>
+          <Button href="/addAuthor">Add Author</Button>
+          <Button href="/searchBooks">Search Books</Button>
+          <Button href="/deleteBook">Delete Books</Button>
+          <Button href="/editBook">Edit Books</Button>
+        </Toolbar>
+      </AppBar>
       <Router>
         <div>
           <Routes>
@@ -25,6 +29,8 @@ function App() {
             <Route path="/addBook" element={<AddBook />} />
             <Route path="/addAuthor" element={<AddAuthor />} />
             <Route path="/searchBooks" element={<SearchBooks />} />
+            <Route path="/deleteBook" element={<DeleteBook />} />
+            <Route path="/editBook" element={<EditBook />} />
           </Routes>
         </div>
       </Router>

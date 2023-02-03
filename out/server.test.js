@@ -406,7 +406,39 @@ describe("Edit book tests", () => {
         let pub_year = PUB_YEAR;
         let genre = GENRE;
         let result = await axios.put(`${baseUrl}/editBook?id=${id}`, {});
+        console.log("RES:", result);
         expect(await isBookInTable(result.data.id, author_id, title, pub_year, genre)).toBeTruthy();
+    });
+    test("edit no book id", async () => {
+        try {
+            await axios.put(`${baseUrl}/editBook`, {});
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "must input a book id" });
+        }
+    });
+    test("edit book id doesn't exist", async () => {
+        let id = 1;
+        try {
+            await axios.put(`${baseUrl}/editBook?id=${id}`, {});
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "book id doesn't exist in database" });
+        }
     });
     test("edit author happy path", async () => {
         let author_id = (await initializeAuthor()).data.id;
@@ -418,6 +450,24 @@ describe("Edit book tests", () => {
         let result = await axios.put(`${baseUrl}/editBook?id=${id}`, { author_id: newAuthorId });
         expect(await isBookInTable(result.data.id, newAuthorId, title, pub_year, genre)).toBeTruthy();
     });
+    test("edit invalid author", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
+        let newAuthorId = 2;
+        try {
+            await axios.put(`${baseUrl}/editBook?id=${id}`, { author_id: newAuthorId });
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "author id doesn't exist in database" });
+        }
+    });
     test("edit title happy path", async () => {
         let author_id = (await initializeAuthor()).data.id;
         let id = (await initializeBook(author_id)).data.id;
@@ -427,6 +477,24 @@ describe("Edit book tests", () => {
         let result = await axios.put(`${baseUrl}/editBook?id=${id}`, { title: newTitle });
         expect(await isBookInTable(result.data.id, author_id, newTitle, pub_year, genre)).toBeTruthy();
     });
+    test("edit invalid title", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
+        let title = "title is way too long and def over 20 characters";
+        try {
+            await axios.put(`${baseUrl}/editBook?id=${id}`, { title: title });
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "book title must be <20 chars" });
+        }
+    });
     test("edit pub year happy path", async () => {
         let author_id = (await initializeAuthor()).data.id;
         let id = (await initializeBook(author_id)).data.id;
@@ -435,6 +503,42 @@ describe("Edit book tests", () => {
         let genre = GENRE;
         let result = await axios.put(`${baseUrl}/editBook?id=${id}`, { pub_year: newPubYear });
         expect(await isBookInTable(result.data.id, author_id, title, newPubYear, genre)).toBeTruthy();
+    });
+    test("edit invalid pub_year not a number", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
+        let newPubYear = 'year';
+        try {
+            await axios.put(`${baseUrl}/editBook?id=${id}`, { pub_year: newPubYear });
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "pub_year must be a 4-digit number" });
+        }
+    });
+    test("edit invalid pub_year out of range", async () => {
+        let author_id = (await initializeAuthor()).data.id;
+        let id = (await initializeBook(author_id)).data.id;
+        let newPubYear = 999;
+        try {
+            await axios.put(`${baseUrl}/editBook?id=${id}`, { pub_year: newPubYear });
+            fail('this call should return a 400');
+        }
+        catch (error) {
+            let errorObj = error;
+            if (errorObj.response === undefined) {
+                throw errorObj;
+            }
+            let { response } = errorObj;
+            expect(response.status).toEqual(400);
+            expect(response.data).toEqual({ error: "pub_year must be a 4-digit number" });
+        }
     });
     test("edit genre happy path", async () => {
         let author_id = (await initializeAuthor()).data.id;

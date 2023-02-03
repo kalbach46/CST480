@@ -295,10 +295,43 @@ app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
 })
 
 app.put("/api/editBook", async (req, res: resourceResponse) => {
-    // let book = await getResourceByID(BOOKS, Number(req.query.id));
-    editBook(Number(req.query.id), req.body.author_id, req.body.title, req.body.pub_year, req.body.genre).then(() => {
-        return res.json({id : Number(req.query.id)})
-    })
+    if(req.query.id){
+        let id:number = Number(req.query.id);
+        if(!await validID(BOOKS, id)){
+            return res.status(400).json({error : "book id doesn't exist in database"})
+        }
+        let author_id:number = req.body.author_id;
+        if(author_id && !await validID(AUTHORS, author_id)){
+            return res.status(400).json({error : "author id doesn't exist in database"})
+        }
+
+        let title:string = req.body.title;
+        if(req.body.title){
+            try{
+                const validTitle = z.string().max(20).optional();
+                validTitle.parse(title);
+            } catch (e) {
+                return res.status(400).json({ error : "book title must be <20 chars"});
+            }
+        }
+
+        let pub_year:number = req.body.pub_year;
+        if(req.body.pub_year){
+            try{
+                const validYear = z.number().min(1000).max(9999).optional();
+                validYear.parse(pub_year);
+            } catch (e) {
+                return res.status(400).json({error : "pub_year must be a 4-digit number"});
+            }
+        }
+
+        let genre:string = req.body.genre;
+        editBook(id, req.body.author_id, req.body.title, req.body.pub_year, req.body.genre).then(() => {
+            return res.json({id : Number(req.query.id)})
+        })
+    } else {
+        return res.status(400).json({error : "must input a book id"})
+    }
 })
 
 
