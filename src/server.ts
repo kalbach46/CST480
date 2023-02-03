@@ -4,13 +4,14 @@ import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
 import path from "path";
-
+import cors from "cors";
 
 const BOOKS:string = "books";
 const AUTHORS:string = "authors";
 
 let app = express();
 app.use(express.json());
+// app.use(cors);
 
 // create database "connection"
 // use absolute path to avoid this issue
@@ -37,58 +38,113 @@ async function generateUniqueID(table:string):Promise<number>{
 }
 
 async function addAuthor(id: number, name: string, bio: string) {
-    return await db.run(
-        `INSERT INTO authors(id, name, bio) VALUES(
-            '${id}', 
-            '${name}', 
-            '${bio}'
-        )`
+    let statement = await db.prepare(
+        'INSERT INTO authors(id, name, bio) VALUES(?, ?, ?)'
     );
+    await statement.bind([
+        id, 
+        name, 
+        bio
+    ]);
+    return await statement.run();
 }
 
 async function addBook(id:number, author_id:number, title:string, pub_year:number, genre:string){
-    return await db.run(
-        `INSERT INTO books(id, author_id, title, pub_year, genre) VALUES(
-            '${id}',
-            '${author_id}',
-            '${title}',
-            '${pub_year}',
-            '${genre}'
-        )`
+    let statement = await db.prepare(
+        'INSERT INTO books(id, author_id, title, pub_year, genre) VALUES(?, ?, ?, ?, ?)'
     );
+    await statement.bind([
+        id,
+        author_id,
+        title,
+        pub_year,
+        genre
+    ]);
+    return await statement.run();
+}
+
+async function editBook(id:number, author_id:number, title:string, pub_year:number, genre:string){
+    let statement = await db.prepare(
+        `UPDATE books 
+        SET 
+            author_id=IfNull(?, author_id),
+            title=IfNull(?, title),
+            pub_year=IfNull(?, pub_year),
+            genre=IfNull(?, genre)
+        WHERE id=?`
+    );
+    await statement.bind([
+        author_id ? author_id : null,
+        title ? title : null,
+        pub_year ? pub_year : null,
+        genre ? genre : null,
+        id
+    ]);
+    return await statement.run();
 }
 
 async function validGenre(genre:string):Promise<boolean>{
-    let out = await db.all(`SELECT genre FROM books WHERE genre='${genre}'`);
+    let statement = await db.prepare(
+        'SELECT genre FROM books WHERE genre=?'
+    );
+    await statement.bind([
+        genre
+    ]);
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function validID(type:string, id:number){
-    let out = await db.all(`SELECT ${id} from ${type} WHERE id=${id}`);
+    let statement = await db.prepare(
+        `SELECT ? from ${type} WHERE id=?`
+    );
+    await statement.bind([
+        id,
+        id
+    ])
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function authorHasBooks(id:number){
-    let out = await db.all(`SELECT id FROM books WHERE author_id=${id}`);
+    let statement = await db.prepare(
+        'SELECT id FROM books WHERE author_id=?'
+    );
+    await statement.bind([
+        id
+    ]);
+    let out = await statement.all();
     return out.length>0;
 }
 
 async function deleteResource(id:number, type:string){
-    return await db.run(
-        `DELETE FROM ${type}s WHERE id=${id}`
+    let statement = await db.prepare(
+        `DELETE FROM ${type}s WHERE id=?`
     );
+    await statement.bind([
+        id
+    ]);
+    return await statement.run();
 }
 
 async function deleteAuthorBooks(id:number){
-    return await db.run(
-        `DELETE FROM books WHERE author_id=${id}`
+    let statement = await db.prepare(
+        'DELETE FROM books WHERE author_id=?'
     );
+    await statement.bind([
+        id
+    ]);
+    return await statement.run();
 }
 
 async function getBooksByGenre(genre:string){
-    return await db.all(
-        `SELECT * FROM books WHERE genre='${genre}'`
+    let statement = await db.prepare(
+        'SELECT * FROM books WHERE genre=?'
     );
+    await statement.bind([
+        genre
+    ]);
+    return await statement.all();
 }
 
 async function getResourceByID(type:string, id:number){
@@ -127,11 +183,11 @@ interface Author {
     bio: string
 }
 
-type createResourceResponse = Response <Resource | Error>;
+type resourceResponse = Response <Resource | Error>;
 type getBooksResponse = Response <Array<Book> | Error>;
 type getAuthorsResponse = Response <Array<Author> | Error>;
 
-app.post("/api/addAuthor", async (req, res: createResourceResponse) => {
+app.post("/api/addAuthor", async (req, res: resourceResponse) => {
     let id:number = await generateUniqueID(AUTHORS);
     let name:string = req.body.name;
     let bio:string = req.body.bio;
@@ -147,7 +203,7 @@ app.post("/api/addAuthor", async (req, res: createResourceResponse) => {
     })
 })
 
-app.post("/api/addBook", async (req, res: createResourceResponse) => {
+app.post("/api/addBook", async (req, res: resourceResponse) => {
     let id:number = await generateUniqueID(BOOKS);
 
     let author_id:number = req.body.author_id;
@@ -235,6 +291,46 @@ app.get("/api/getAuthors", async (req, res: getAuthorsResponse) => {
     } else {
         let authors:Array<Author> = await getAllOfType(AUTHORS);
         return res.json(authors);
+    }
+})
+
+app.put("/api/editBook", async (req, res: resourceResponse) => {
+    if(req.query.id){
+        let id:number = Number(req.query.id);
+        if(!await validID(BOOKS, id)){
+            return res.status(400).json({error : "book id doesn't exist in database"})
+        }
+        let author_id:number = req.body.author_id;
+        if(author_id && !await validID(AUTHORS, author_id)){
+            return res.status(400).json({error : "author id doesn't exist in database"})
+        }
+
+        let title:string = req.body.title;
+        if(req.body.title){
+            try{
+                const validTitle = z.string().max(20).optional();
+                validTitle.parse(title);
+            } catch (e) {
+                return res.status(400).json({ error : "book title must be <20 chars"});
+            }
+        }
+
+        let pub_year:number = req.body.pub_year;
+        if(req.body.pub_year){
+            try{
+                const validYear = z.number().min(1000).max(9999).optional();
+                validYear.parse(pub_year);
+            } catch (e) {
+                return res.status(400).json({error : "pub_year must be a 4-digit number"});
+            }
+        }
+
+        let genre:string = req.body.genre;
+        editBook(id, req.body.author_id, req.body.title, req.body.pub_year, req.body.genre).then(() => {
+            return res.json({id : Number(req.query.id)})
+        })
+    } else {
+        return res.status(400).json({error : "must input a book id"})
     }
 })
 
