@@ -5,6 +5,7 @@ import * as url from "url";
 import { z } from "zod";
 import path from "path";
 import cors from "cors";
+import argon2 from "argon2";
 
 const BOOKS:string = "books";
 const AUTHORS:string = "authors";
@@ -186,6 +187,7 @@ interface Author {
 type resourceResponse = Response <Resource | Error>;
 type getBooksResponse = Response <Array<Book> | Error>;
 type getAuthorsResponse = Response <Array<Author> | Error>;
+type loginResponse = Response <string | Error>;
 
 app.post("/api/addAuthor", async (req, res: resourceResponse) => {
     let id:number = await generateUniqueID(AUTHORS);
@@ -334,6 +336,28 @@ app.put("/api/editBook", async (req, res: resourceResponse) => {
     }
 })
 
+app.put("/auth/login", async (req, res: loginResponse) => {
+    console.log(String(req.body.id));
+    console.log(req.body.username);
+    console.log(req.body.password);
+
+    let id:number = req.body.id;
+    let password:string = req.body.password;
+    let username:string = req.body.username;
+
+    let statement = await db.prepare(
+        'SELECT * FROM users WHERE id=?'
+    );
+    await statement.bind([id]);
+    let user = await statement.get();
+    let hashed_pass = user.password;
+    if(await argon2.verify(hashed_pass, password)){
+        console.log("valid");
+    } else {
+        console.log("invalid");
+    }
+    res.status(200).json("TEST");
+})
 
 let port = 3000;
 let host = "localhost";

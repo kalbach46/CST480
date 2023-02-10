@@ -4,6 +4,7 @@ import { open } from "sqlite";
 import * as url from "url";
 import { z } from "zod";
 import path from "path";
+import argon2 from "argon2";
 const BOOKS = "books";
 const AUTHORS = "authors";
 let app = express();
@@ -227,7 +228,6 @@ app.get("/api/getAuthors", async (req, res) => {
     }
 });
 app.put("/api/editBook", async (req, res) => {
-    console.log(req.body);
     if (req.query.id) {
         let id = Number(req.query.id);
         if (!await validID(BOOKS, id)) {
@@ -265,6 +265,25 @@ app.put("/api/editBook", async (req, res) => {
     else {
         return res.status(400).json({ error: "must input a book id" });
     }
+});
+app.put("/auth/login", async (req, res) => {
+    console.log(String(req.body.id));
+    console.log(req.body.username);
+    console.log(req.body.password);
+    let id = req.body.id;
+    let password = req.body.password;
+    let username = req.body.username;
+    let statement = await db.prepare('SELECT * FROM users WHERE id=?');
+    await statement.bind([id]);
+    let user = await statement.get();
+    let hashed_pass = user.password;
+    if (await argon2.verify(hashed_pass, password)) {
+        console.log("valid");
+    }
+    else {
+        console.log("invalid");
+    }
+    res.status(200).json("TEST");
 });
 let port = 3000;
 let host = "localhost";
