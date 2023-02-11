@@ -1,5 +1,4 @@
-INSERT INTO users (id, username, password) VALUES (
-    '1',
+INSERT INTO users (username, password) VALUES (
     'kalbach46',
     '$argon2id$v=19$m=65536,t=3,p=4$RtJpRqBTF/3Ua9kqcQD+sg$bkOELvqWaKE9MoMyyOA9gLVg722pZsWjDi3buSyoT8Q'
 );

@@ -14,7 +14,6 @@ CREATE TABLE authors (
 );
 
 CREATE TABLE users ( 
-    id INTEGER PRIMARY KEY,
     username TEXT,
     password TEXT
 );

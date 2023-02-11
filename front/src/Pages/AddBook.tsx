@@ -4,6 +4,8 @@ import {Controller, useForm, SubmitHandler} from 'react-hook-form';
 import axios from 'axios';
 import 'react-datepicker/dist/react-datepicker.css';
 import Author from '../Models/Author';
+import Cookies from 'js-cookie';
+
 
 type FormValues = {
     author_id: number,
@@ -13,8 +15,7 @@ type FormValues = {
 }
 
 export default function AddBook() {
-    const { control, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
-    const [bookID, setBookID] = useState<number>();
+    const { control, handleSubmit, reset} = useForm<FormValues>();
     const [authorIDs, setAuthorIDs] = useState<Array<number>>([]);
     const [error, setError] = useState<string>('');
 
@@ -26,13 +27,10 @@ export default function AddBook() {
         reset();
         const getData = async () => {
             axios.post('/api/addBook', {author_id, title, pub_year, genre})
-            .then((result) => {
-                let body:number = result.data.id;
-                setBookID(body);
+            .then(() => {
                 setError('');
             })
             .catch((error)=> {
-                setBookID(0);
                 setError(error.response.data.error);
             });
         }
@@ -61,118 +59,122 @@ export default function AddBook() {
 
     return (
         <div>
-            <h2>Add A Book</h2>
-            {authorIDs.length===0 ? `Can't add any books if there are no authors! add an author first` : 
+            {Cookies.get('loggedIn')==='true'? 
                 <div>
-                    <Controller
-                        name="author_id"
-                        control={control}
-                        defaultValue={authorIDs[0]}
-                        rules={{required:'This field is required.'}}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Author ID</InputLabel>
-                                    <Select
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                    >
-                                    <FormHelperText>{error ? error.message : null}</FormHelperText>
-                                    {authorIDs.map(id => {
-                                        return (
-                                            <MenuItem key={id} value={id}>{id}</MenuItem>
-                                        )
-                                    })}
-                                    </Select>
-                                </>
-                        )}
-                    />
-                    <Controller
-                        name="title"
-                        control={control}
-                        defaultValue={''}
-                        rules={{
-                            required:'This field is required.',
-                            maxLength: {
-                                value: 40,
-                                message: 'Book title cannot be more than 40 chars.'
-                            }
-                        }}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Book Title</InputLabel>
-                                    <TextField
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                        helperText={error ? error.message : null}
-                                    />
-                                </>
-                        )}
-                    />
-                    <Controller
-                        name="pub_year"
-                        control={control}
-                        defaultValue={1000}
-                        rules={{
-                            required:'This field is required.',
-                            max: {
-                                value: 2023,
-                                message: 'Year must be between 1000-2023.'
-                            },
-                            min: {
-                                value: 1000,
-                                message: 'Year must be between 1000-2023.'
-                            } 
-                        }}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Published Year</InputLabel>
-                                    <TextField
-                                        type="number"
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                        helperText={error ? error.message : null}
-                                    />
-                                </>
-                        )}
-                    />
-                    <Controller
-                        name="genre"
-                        control={control}
-                        defaultValue={''}
-                        rules={{
-                            required:'This field is required.',
-                            maxLength: {
-                                value: 20,
-                                message: 'Genre cannot be more than 20 chars.'
-                            }
-                        }}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Genre</InputLabel>
-                                    <TextField
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                        helperText={error ? error.message : null}
-                                    />
-                                </>
-                        )}
-                    />
-                    <div>
-                        <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Book</Button>
-                    </div>
-                    <div>
-                        {error}
-                    </div>
+                    <h2>Add A Book</h2>
+                    {authorIDs.length===0 ? `Can't add any books if there are no authors! add an author first` : 
+                        <div>
+                            <Controller
+                                name="author_id"
+                                control={control}
+                                defaultValue={authorIDs[0]}
+                                rules={{required:'This field is required.'}}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Author ID</InputLabel>
+                                            <Select
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                            >
+                                            <FormHelperText>{error ? error.message : null}</FormHelperText>
+                                            {authorIDs.map(id => {
+                                                return (
+                                                    <MenuItem key={id} value={id}>{id}</MenuItem>
+                                                )
+                                            })}
+                                            </Select>
+                                        </>
+                                )}
+                            />
+                            <Controller
+                                name="title"
+                                control={control}
+                                defaultValue={''}
+                                rules={{
+                                    required:'This field is required.',
+                                    maxLength: {
+                                        value: 40,
+                                        message: 'Book title cannot be more than 40 chars.'
+                                    }
+                                }}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Book Title</InputLabel>
+                                            <TextField
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                                helperText={error ? error.message : null}
+                                            />
+                                        </>
+                                )}
+                            />
+                            <Controller
+                                name="pub_year"
+                                control={control}
+                                defaultValue={1000}
+                                rules={{
+                                    required:'This field is required.',
+                                    max: {
+                                        value: 2023,
+                                        message: 'Year must be between 1000-2023.'
+                                    },
+                                    min: {
+                                        value: 1000,
+                                        message: 'Year must be between 1000-2023.'
+                                    } 
+                                }}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Published Year</InputLabel>
+                                            <TextField
+                                                type="number"
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                                helperText={error ? error.message : null}
+                                            />
+                                        </>
+                                )}
+                            />
+                            <Controller
+                                name="genre"
+                                control={control}
+                                defaultValue={''}
+                                rules={{
+                                    required:'This field is required.',
+                                    maxLength: {
+                                        value: 20,
+                                        message: 'Genre cannot be more than 20 chars.'
+                                    }
+                                }}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Genre</InputLabel>
+                                            <TextField
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                                helperText={error ? error.message : null}
+                                            />
+                                        </>
+                                )}
+                            />
+                            <div>
+                                <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Book</Button>
+                            </div>
+                            <div>
+                                {error}
+                            </div>
+                        </div>
+                    }
                 </div>
-            }
+            : <a href='/'>Login</a>}
         </div>
     )
 }
