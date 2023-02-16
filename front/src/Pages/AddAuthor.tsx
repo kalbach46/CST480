@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {TextField, InputLabel, Button} from '@mui/material';
 import {Controller, useForm, SubmitHandler} from 'react-hook-form';
+import Cookies from 'js-cookie';
 import axios from 'axios';
 
 type FormValues = {
@@ -9,8 +10,7 @@ type FormValues = {
 }
 
 export default function AddAuthor() {
-    const {control, handleSubmit, formState: {errors}, reset} = useForm<FormValues>();
-    const [authorID, setAuthorID] = useState<number>();
+    const {control, handleSubmit, reset} = useForm<FormValues>();
     const [error, setError] = useState<string>('');
 
     const onSubmit: SubmitHandler<FormValues> = data => {
@@ -19,13 +19,10 @@ export default function AddAuthor() {
         reset();
         const getData = async () => {
             axios.post('/api/addAuthor', {name, bio})
-            .then((result) => {
-                let body:number = result.data.id;
-                setAuthorID(body);
+            .then(() => {
                 setError('');
             })
             .catch((error) => {
-                setAuthorID(0);
                 setError(error.response.data.error);
             })
 
@@ -35,61 +32,65 @@ export default function AddAuthor() {
 
     return (
         <div>
-            <h2>Add An Author</h2>
-            <Controller
-                        name="name"
-                        control={control}
-                        defaultValue={''}
-                        rules={{
-                            required:'This is required.', 
-                            maxLength: {
-                                value: 30,
-                                message: 'Author name cannot be more than 30 chars.'
-                            }
-                        }}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Author Name</InputLabel>
-                                    <TextField
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                        helperText={error ? error.message : null}
-                                    />
-                                </>
-                        )}
-                    />
+            {Cookies.get('loggedIn')==='true'? 
+                <div>
+                    <h2>Add An Author</h2>
                     <Controller
-                        name="bio"
-                        control={control}
-                        defaultValue={''}
-                        rules={{
-                            required:'This is required.', 
-                            maxLength: {
-                                value: 150,
-                                message: 'Bio cannot be more than 150 chars.'
-                            }
-                        }}
-                        render={({
-                            field: {onChange, value}, fieldState: { error }}) => (
-                                <>
-                                    <InputLabel>Author Bio</InputLabel>
-                                    <TextField
-                                        value={value}
-                                        onChange={onChange}
-                                        error={!!error}
-                                        helperText={error ? error.message : null}
-                                    />
-                                </>
-                        )}
-                    />
+                                name="name"
+                                control={control}
+                                defaultValue={''}
+                                rules={{
+                                    required:'This is required.', 
+                                    maxLength: {
+                                        value: 30,
+                                        message: 'Author name cannot be more than 30 chars.'
+                                    }
+                                }}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Author Name</InputLabel>
+                                            <TextField
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                                helperText={error ? error.message : null}
+                                            />
+                                        </>
+                                )}
+                            />
+                            <Controller
+                                name="bio"
+                                control={control}
+                                defaultValue={''}
+                                rules={{
+                                    required:'This is required.', 
+                                    maxLength: {
+                                        value: 150,
+                                        message: 'Bio cannot be more than 150 chars.'
+                                    }
+                                }}
+                                render={({
+                                    field: {onChange, value}, fieldState: { error }}) => (
+                                        <>
+                                            <InputLabel>Author Bio</InputLabel>
+                                            <TextField
+                                                value={value}
+                                                onChange={onChange}
+                                                error={!!error}
+                                                helperText={error ? error.message : null}
+                                            />
+                                        </>
+                                )}
+                            />
+                            <div>
+                                <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Author</Button>
+                            </div>
                     <div>
-                        <Button variant='outlined' onClick={handleSubmit(onSubmit)}>Add Author</Button>
+                        {error}
                     </div>
-            <div>
-                {error}
-            </div>
+                </div>
+            : <a href='/'>Login</a>}
         </div>
     )
 }

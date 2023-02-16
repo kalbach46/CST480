@@ -3,6 +3,7 @@ import {TableContainer, Table, TableHead, TableRow, TableCell, TableBody} from '
 import axios from 'axios';
 import Book from '../Models/Book';
 import Author from '../Models/Author';
+import Cookies from 'js-cookie';
 
 export default function Home() {
     const [books, setBooks] = useState<Array<Book>>();
@@ -35,7 +36,6 @@ export default function Home() {
                 setAuthorsError(error.response.data.error);
             });
         }
-
         getBooks();
         getAuthors();
     }, []);
@@ -45,62 +45,66 @@ export default function Home() {
     }
 
     return (
-        <TableContainer>
-            <h2>THE BOOK BARN</h2>
-            <Table>
-                <TableHead>
-                    <TableRow style={{background:"#c0c0c0"}}>
-                        <TableCell>Book ID</TableCell>
-                        <TableCell>Author ID</TableCell>
-                        <TableCell>Title</TableCell>
-                        <TableCell>Published Year</TableCell>
-                        <TableCell>Genre</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                {!books ? <TableRow></TableRow> :
-                    books.map(book => {
-                        return (
-                            <TableRow key={book.id}>
-                                <TableCell>{book.id}</TableCell>
-                                <TableCell>{book.author_id}</TableCell>
-                                <TableCell>{book.title}</TableCell>
-                                <TableCell>{book.pub_year}</TableCell>
-                                <TableCell>{book.genre}</TableCell>
+        <div>
+            {Cookies.get('loggedIn')==='true'? 
+                <TableContainer>
+                    <h2>THE BOOK BARN</h2>
+                    <Table>
+                        <TableHead>
+                            <TableRow style={{background:"#c0c0c0"}}>
+                                <TableCell>Book ID</TableCell>
+                                <TableCell>Author ID</TableCell>
+                                <TableCell>Title</TableCell>
+                                <TableCell>Published Year</TableCell>
+                                <TableCell>Genre</TableCell>
                             </TableRow>
-                        )
-                    })
-                }
-                </TableBody>
-            </Table>
-            <div>
-                {booksError}
-            </div>
-            <Table>
-                <TableHead>
-                    <TableRow style={{background:"#c0c0c0"}}>
-                        <TableCell>Author ID</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Bio</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                {!authors ? <TableRow></TableRow> : 
-                    authors.map(author => {
-                        return (
-                            <TableRow key={author.id}>
-                                <TableCell>{author.id}</TableCell>
-                                <TableCell>{author.name}</TableCell>
-                                <TableCell>{author.bio}</TableCell>
+                        </TableHead>
+                        <TableBody>
+                        {!books ? <TableRow></TableRow> :
+                            books.map(book => {
+                                return (
+                                    <TableRow key={book.id}>
+                                        <TableCell>{book.id}</TableCell>
+                                        <TableCell>{book.author_id}</TableCell>
+                                        <TableCell>{book.title}</TableCell>
+                                        <TableCell>{book.pub_year}</TableCell>
+                                        <TableCell>{book.genre}</TableCell>
+                                    </TableRow>
+                                )
+                            })
+                        }
+                        </TableBody>
+                    </Table>
+                    <div>
+                        {booksError}
+                    </div>
+                    <Table>
+                        <TableHead>
+                            <TableRow style={{background:"#c0c0c0"}}>
+                                <TableCell>Author ID</TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Bio</TableCell>
                             </TableRow>
-                        )
-                    })
-                }
-                </TableBody>
-            </Table>
-            <div>
-                {authorsError}
-            </div>     
-        </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                        {!authors ? <TableRow></TableRow> : 
+                            authors.map(author => {
+                                return (
+                                    <TableRow key={author.id}>
+                                        <TableCell>{author.id}</TableCell>
+                                        <TableCell>{author.name}</TableCell>
+                                        <TableCell>{author.bio}</TableCell>
+                                    </TableRow>
+                                )
+                            })
+                        }
+                        </TableBody>
+                    </Table>
+                    <div>
+                        {authorsError}
+                    </div>     
+                </TableContainer>
+            : <a href='/'>Login</a>}
+        </div>
     )
 }

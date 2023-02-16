@@ -6,6 +6,7 @@ import AddBook from './Pages/AddBook';
 import SearchBooks from './Pages/SearchBooks';
 import DeleteBook from './Pages/DeleteBook';
 import EditBook from './Pages/EditBook';
+import Login from './Pages/Login';
 import {AppBar, Button, Toolbar} from '@mui/material';
 import './App.css';
 
@@ -14,7 +15,8 @@ function App() {
     <div>
       <AppBar position="sticky" style={{marginBottom:'20px', background: '#f0f0f0'}}>
         <Toolbar>
-          <Button href="/">Home</Button>
+          <Button href="/">Login</Button>
+          <Button href="/home">Home</Button>
           <Button href="/addBook">Add Book</Button>
           <Button href="/addAuthor">Add Author</Button>
           <Button href="/searchBooks">Search Books</Button>
@@ -25,7 +27,8 @@ function App() {
       <Router>
         <div>
           <Routes>
-            <Route path="/" element={<Home />} />       
+          <Route path="/" element={<Login />} />       
+          <Route path="/Home" element={<Home />} />       
             <Route path="/addBook" element={<AddBook />} />
             <Route path="/addAuthor" element={<AddAuthor />} />
             <Route path="/searchBooks" element={<SearchBooks />} />
