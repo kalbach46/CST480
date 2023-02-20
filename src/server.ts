@@ -7,7 +7,8 @@ import path from "path";
 import argon2 from "argon2";
 import crypto from "crypto";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
 
 const BOOKS:string = "books";
 const AUTHORS:string = "authors";
@@ -17,6 +18,7 @@ let tokens:string[] = [];
 let app = express();
 app.use(express.json());
 app.use(cookieParser());
+app.use(helmet());
 dotenv.config({path:'../.env'});
 
 let __dirname = url.fileURLToPath(new URL("..", import.meta.url));
